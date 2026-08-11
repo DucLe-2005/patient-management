@@ -9,3 +9,4 @@ message PatientEvent {
     string email = 3;
     string event_type = 4;
 }
+
