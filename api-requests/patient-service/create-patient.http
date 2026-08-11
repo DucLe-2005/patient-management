@@ -4,7 +4,7 @@ Content-Type: application/json
 
 {
   "name": "John Doe with billing account",
-  "email": "test_billing_account@example.com",
+  "email": "test_billing_account123211@example.com",
   "address": "123 m32ain street",
   "dateOfBirth": "2005-02-07",
   "registeredDate": "2010-10-10"
