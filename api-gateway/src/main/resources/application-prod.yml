@@ -8,14 +8,14 @@ spring:
         webflux:
           routes:
             - id: auth-service-route
-              uri: ${AUTH_SERVICE_ROUTE_URL:http://auth-service:4005}
+              uri: http://host.docker.internal:4005
               predicates:
                 - Path=/auth/**
               filters:
                 - StripPrefix=1
 
             - id: patient-service-route
-              uri: ${PATIENT_SERVICE_ROUTE_URL:http://patient-service:4000}
+              uri: http://host.docker.internal:4000
               predicates:
                 - Path=/api/patients/**
               filters:
@@ -23,14 +23,14 @@ spring:
                 - JwtValidation
 
             - id: api-docs-patient-route
-              uri: ${PATIENT_SERVICE_ROUTE_URL:http://patient-service:4000}
+              uri: http://host.docker.internal:4000
               predicates:
                 - Path=/api-docs/patients
               filters:
                 - RewritePath=/api-docs/patients,/v3/api-docs
 
             - id: api-docs-auth-route
-              uri: ${AUTH_SERVICE_ROUTE_URL:http://auth-service:4005}
+              uri: http://auth-service:4005
               predicates:
                 - Path=/api-docs/auth
               filters:
