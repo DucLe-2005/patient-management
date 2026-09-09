@@ -15,7 +15,7 @@ public class JwtValidationGatewayFilterFactory extends
     private final WebClient webClient;
 
     public JwtValidationGatewayFilterFactory(WebClient.Builder webClientBuilder,
-                                       @Value("${auth.service.url}") String authServiceUrl) {
+                                       @Value("${auth.service.route.url}") String authServiceUrl) {
         this.webClient = webClientBuilder.baseUrl(authServiceUrl).build();
     }
 
