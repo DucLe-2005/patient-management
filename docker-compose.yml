@@ -1,0 +1,134 @@
+name: patient-management
+
+services:
+  patient-db:
+    image: ${POSTGRES_IMAGE}
+    environment:
+      POSTGRES_DB: ${PATIENT_DB_NAME}
+      POSTGRES_USER: ${PATIENT_DB_USER}
+      POSTGRES_PASSWORD: ${PATIENT_DB_PASSWORD}
+    ports:
+      - "${PATIENT_DB_HOST_PORT}:5432"
+    volumes:
+      - patient-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PATIENT_DB_USER} -d ${PATIENT_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  auth-db:
+    image: ${POSTGRES_IMAGE}
+    environment:
+      POSTGRES_DB: ${AUTH_DB_NAME}
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+    ports:
+      - "${AUTH_DB_HOST_PORT}:5432"
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_DB_USER} -d ${AUTH_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  kafka:
+    image: ${KAFKA_IMAGE}
+    environment:
+      KAFKA_NODE_ID: ${KAFKA_NODE_ID}
+      KAFKA_PROCESS_ROLES: ${KAFKA_PROCESS_ROLES}
+      KAFKA_CONTROLLER_QUORUM_VOTERS: ${KAFKA_CONTROLLER_QUORUM_VOTERS}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
+      KAFKA_LISTENERS: ${KAFKA_LISTENERS}
+      KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS}
+      KAFKA_INTER_BROKER_LISTENER_NAME: ${KAFKA_INTER_BROKER_LISTENER_NAME}
+      KAFKA_CONTROLLER_LISTENER_NAMES: ${KAFKA_CONTROLLER_LISTENER_NAMES}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: ${KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS}
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID}
+    ports:
+      - "${KAFKA_HOST_PORT}:9092"
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+
+  billing-service:
+    build: ./billing-service
+    ports:
+      - "${BILLING_SERVICE_HOST_PORT}:4001" # REST API
+      - "${BILLING_GRPC_HOST_PORT}:9001" # gRPC
+    restart: unless-stopped
+
+  patient-service:
+    build: ./patient-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://patient-db:5432/${PATIENT_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${PATIENT_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${PATIENT_DB_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      SPRING_SQL_INIT_MODE: ${SPRING_SQL_INIT_MODE}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      BILLING_SERVICE_ADDRESS: ${BILLING_SERVICE_ADDRESS}
+      BILLING_SERVICE_GRPC_PORT: ${BILLING_SERVICE_GRPC_PORT}
+    ports:
+      - "${PATIENT_SERVICE_HOST_PORT}:4000"
+    depends_on:
+      patient-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      billing-service:
+        condition: service_started
+    restart: unless-stopped
+
+  analytics-service:
+    build: ./analytics-service
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+    ports:
+      - "${ANALYTICS_SERVICE_HOST_PORT}:4002"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  auth-service:
+    build: ./auth-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/${AUTH_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${AUTH_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${AUTH_DB_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      SPRING_SQL_INIT_MODE: ${SPRING_SQL_INIT_MODE}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "${AUTH_SERVICE_HOST_PORT}:4005"
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  api-gateway:
+    build: ./api-gateway
+    environment:
+      AUTH_SERVICE_ROUTE_URL: ${AUTH_SERVICE_ROUTE_URL}
+      PATIENT_SERVICE_ROUTE_URL: ${PATIENT_SERVICE_ROUTE_URL}
+    ports:
+      - "${API_GATEWAY_HOST_PORT}:4004"
+    depends_on:
+      auth-service:
+        condition: service_started
+      patient-service:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  patient-db-data:
+  auth-db-data:
