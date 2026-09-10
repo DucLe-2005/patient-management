@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs test clean rebuild
+.PHONY: help build up down restart logs test reset rebuild
 
 help:
 	@echo "Available commands:"
@@ -9,7 +9,7 @@ help:
 	@echo "  make rebuild  - Rebuild and start everything"
 	@echo "  make logs     - Follow logs"
 	@echo "  make test     - Run Maven tests"
-	@echo "  make clean    - Remove containers and volumes"
+	@echo "  make reset    - Remove containers and volumes (deletes local data)"
 
 build:
 	docker compose build
@@ -34,5 +34,5 @@ logs:
 test:
 	mvn test
 
-clean:
+reset:
 	docker compose down -v
