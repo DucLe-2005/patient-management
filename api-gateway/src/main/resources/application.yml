@@ -1,6 +1,26 @@
 server:
   port: 4004
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+      group:
+        liveness:
+          include: livenessState
+          show-components: always
+          show-details: always
+        readiness:
+          include: readinessState,authService,patientService
+          show-components: always
+          show-details: always
+
 spring:
   cloud:
     gateway:

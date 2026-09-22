@@ -14,6 +14,10 @@ FROM eclipse-temurin:24-jre AS runner
 
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /app/target/analytics-service-0.0.1-SNAPSHOT.jar ./app.jar
 
 EXPOSE 4002

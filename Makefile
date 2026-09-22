@@ -4,11 +4,11 @@ TAIL ?= 200
 
 help:
 	@echo "Available commands:"
-	@echo "  make build        - Build all service images"
+	@echo "  make build        - Build service images"
 	@echo "  make start        - Start all services in the background"
 	@echo "  make stop         - Stop all services"
 	@echo "  make restart      - Stop and start all services"
-	@echo "  make rebuild      - Rebuild images and recreate all services"
+	@echo "  make rebuild      - Rebuild images and recreate services"
 	@echo "  make status       - Show service status"
 	@echo "  make logs         - Show the latest 200 log lines"
 	@echo "  make logs-follow  - Follow service logs"
@@ -16,10 +16,17 @@ help:
 	@echo "  make test         - Run Maven tests"
 	@echo "  make reset        - Remove containers and volumes (deletes local data)"
 	@echo ""
-	@echo "Optional: SERVICE=auth-service and TAIL=50 narrow status or logs output."
+	@echo ""
+	@echo "Options:"
+	@echo "  SERVICE=auth-service  Target one service for build, rebuild, status, or logs"
+	@echo "  TAIL=50               Change the number of lines shown by make logs"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make build SERVICE=auth-service"
+	@echo "  make rebuild SERVICE=patient-service"
 
 build:
-	docker compose build
+	docker compose build $(SERVICE)
 
 start:
 	docker compose up -d
@@ -32,7 +39,7 @@ restart:
 	docker compose up -d
 
 rebuild:
-	docker compose up -d --build
+	docker compose up -d --build $(SERVICE)
 
 status:
 	docker compose ps $(SERVICE)

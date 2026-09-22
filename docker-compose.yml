@@ -64,6 +64,12 @@ services:
     ports:
       - "${BILLING_SERVICE_HOST_PORT}:4001" # REST API
       - "${BILLING_GRPC_HOST_PORT}:9001" # gRPC
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:4001/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
     restart: unless-stopped
 
   patient-service:
@@ -85,7 +91,13 @@ services:
       kafka:
         condition: service_healthy
       billing-service:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:4000/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped
 
   analytics-service:
@@ -97,6 +109,12 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:4002/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
     restart: unless-stopped
 
   auth-service:
@@ -113,6 +131,12 @@ services:
     depends_on:
       auth-db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:4005/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped
 
   api-gateway:
@@ -124,9 +148,15 @@ services:
       - "${API_GATEWAY_HOST_PORT}:4004"
     depends_on:
       auth-service:
-        condition: service_started
+        condition: service_healthy
       patient-service:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:4004/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
     restart: unless-stopped
 
 volumes:

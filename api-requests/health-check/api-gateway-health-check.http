@@ -1,0 +1,5 @@
+### liveness check
+GET http://localhost:4004/actuator/health/liveness
+
+### readiness check
+GET http://localhost:4004/actuator/health/readiness
