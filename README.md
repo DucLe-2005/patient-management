@@ -12,6 +12,19 @@ Patient Management is a Spring Boot microservice system for managing patients, a
 - API gateway providing a single public HTTP entry point
 - OpenAPI documentation for the patient and authentication APIs
 
+## Quick start
+
+With Docker, Docker Compose v2, and Make installed, spin up the complete development environment with:
+
+```bash
+cp .env.example .env
+make build
+make start
+make status
+```
+
+The API gateway will be available at `http://localhost:4004`. Run `make help` to discover additional development commands, including service-specific builds, logs, tests, restarts, and cleanup.
+
 ## Architecture
 
 | Component | Port | Responsibility |
@@ -48,9 +61,16 @@ For the recommended Docker workflow:
 
 For running or building services outside Docker, install a JDK and Maven compatible with the versions declared in the individual service POM files.
 
-## Setup with Make and Docker Compose
+## Detailed setup with Make and Docker Compose
 
 The Makefile provides the primary interface for routine project commands. Run `make help` at any time to list the available targets.
+
+Commands target the entire stack by default. Set `SERVICE` to a Docker Compose service name when you only want to build or rebuild one service:
+
+```bash
+make build SERVICE=auth-service
+make rebuild SERVICE=patient-service
+```
 
 1. Clone the repository and enter it:
 
